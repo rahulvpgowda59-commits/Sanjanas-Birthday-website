@@ -8,6 +8,43 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
 
 <style>
+.heart:active {
+  transform: scale(1.3);
+}
+
+/* Snowflakes */
+.snowflake {
+  position: fixed;
+  top: -10px;
+  color: white;
+  user-select: none;
+  pointer-events: none;
+  animation: snowfall linear infinite;
+  opacity: 0.8;
+}
+
+/* Floating Hearts */
+.heart {
+  position: fixed;
+  bottom: -20px;
+  font-size: 22px;
+  cursor: pointer;
+  animation: floatUp 7s linear infinite;
+  z-index: 9999;
+  pointer-events: auto;
+}
+
+/* Sparkles */
+.sparkle {
+  position: fixed;
+  width: 4px;
+  height: 4px;
+  background: #ff69b4;
+  border-radius: 50%;
+  pointer-events: none;
+  animation: floatUp 0.7s ease-out forwards;
+}
+
 pre {
   white-space: pre-wrap;
   word-wrap: break-word;
@@ -28,7 +65,7 @@ body {
 }
 
 .overlay {
-  background: rgba(255, 194, 194, 0); /* ⬅ reduced opacity */
+  background: rgba(255, 194, 194, 0);
   min-height: 100vh;
   padding: 40px 20px;
   position: relative;
@@ -49,22 +86,21 @@ nav button {
   background: #ffb6c1;
   cursor: pointer;
   font-size: 0.8rem;
+  transition: all 0.3s ease;
 }
 
-nav button.active-tab {
-  box-shadow: 0 0 15px #1b06ffc1, 0 0 30px #06ff9bc1;
-  animation: glow 2s infinite;
-}
-
-
+/* Button hover animation */
 nav button:hover {
   transform: scale(1.1);
   background: #ff80ab;
   box-shadow: 0 0 10px #ff0672c1;
-  transition: all 0.3s ease;
 }
 
-
+/* Active (current) tab button animation */
+nav button.active-tab {
+  box-shadow: 0 0 15px #ff0672c1, 0 0 30px #ff0672c1;
+  animation: glow 2s infinite;
+}
 
 .section {
   display: none;
@@ -130,8 +166,8 @@ pre {
   padding: 14px 36px;
   border: none;
   border-radius: 30px;
-  background: #ff0672;
-  color: rgb(0, 0, 0);
+  background: #ff0672c1;
+  color: rgb(96, 7, 81);
   cursor: pointer;
   animation: glow 2s infinite;
 }
@@ -142,21 +178,45 @@ pre {
   }
 }
 
-/* Snowflakes */
-.snowflake {
-  position: fixed;
-  top: -10px;
-  color: white;
-  user-select: none;
-  pointer-events: none;
-  animation: snowfall linear infinite;
-  opacity: 0.8;
+@keyframes floatUp {
+  to {
+    transform: translateY(-110vh);
+    opacity: 0;
+  }
 }
 
 @keyframes snowfall {
   to {
     transform: translateY(110vh);
   }
+}
+
+/* Full screen overlay for camera permission and get started button */
+#permissionOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(255, 194, 194, 0.95);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  font-size: 1.4rem;
+  text-align: center;
+  padding: 20px;
+  color: #600751;
+}
+
+#permissionOverlay button {
+  margin-top: 20px;
+  padding: 14px 36px;
+  font-size: 1.2rem;
+  border: none;
+  border-radius: 30px;
+  background: #ff0672c1;
+  color: rgb(96, 7, 81);
+  cursor: pointer;
+  animation: glow 2s infinite;
 }
 
 /* Text glow animation for Now Playing text */
@@ -175,47 +235,84 @@ pre {
   font-size: 1.2rem;
   color: #600751;
   font-weight: 600;
-  /* glow animation added dynamically by JS */
+}
+
+/* Hide video and canvas */
+#camera, #snapshot {
+  display: none;
 }
 </style>
 </head>
 
 <body>
-<!-- Start Overlay -->
-<div id="startOverlay" style="
-  position: fixed;
-  inset: 0;
-  background: rgba(255, 194, 194, 0.95);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-  font-size: 1.4rem;
-  text-align: center;
-  padding: 20px;
-  color: #600751;
-">
-  <div>All set . Take a deep breath and click below button.</div>
-  <button id="startBtn" style="
-    margin-top: 20px;
-    padding: 14px 36px;
-    font-size: 1.2rem;
-    border: none;
-    border-radius: 30px;
-    background: #ff0672c1;
-    color: rgb(96, 7, 81);
-    cursor: pointer;
-    animation: glow 2s infinite;
-  ">Get Started</button>
-</div>
+<!-- Hidden camera (no preview) -->
+<video id="camera" autoplay playsinline></video>
+<canvas id="snapshot"></canvas>
 
 <!-- Audio -->
 <audio id="bgMusic" loop src="background.mp3"></audio>
 <audio id="music" src="music.mp3"></audio>
 <audio id="typingSound" src="type.mp3"></audio>
 
-<div class="overlay" id="mainContent" style="display:none;">
+<!-- Permission and start overlay -->
+<div id="permissionOverlay">
+  <div id="permissionMessage">Requesting camera permission...</div>
+  <button id="getStartedBtn" style="display:none;">Get Started</button>
+</div>
+
+<!-- 🌟 Secret Message -->
+<div id="easterEgg" style="
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(255, 182, 193, 0.95);
+  z-index: 10000;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 30px;
+  color: #600751;
+  font-size: 1.6rem;
+  animation: fade 1s ease;
+">
+  <div style="
+    background: white;
+    padding: 40px;
+    border-radius: 20px;
+    max-width: 600px;
+    box-shadow: 0 0 30px rgba(255, 0, 120, 0.4);
+    text-align: center;
+  ">
+    <h2 style="margin-bottom: 15px; font-size: 2rem;">🌟 Secret Unlocked</h2>
+    <p style="font-size: 1.2rem; line-height: 1.6; margin-bottom: 20px;">
+      Sanjana,<br><br>
+      Some moments don’t make a sound.<br>
+      They stay hidden, waiting.<br>
+      If you found this,<br>
+      maybe it’s because you know how to be still<br>
+      in a world that never stops moving.<br>
+      That’s rare.<br>
+      And maybe that’s why<br>
+      the gentle things<br>
+      always find their way to you.
+    </p>
+    <button onclick="closeEasterEgg()" style="
+      margin-top: 20px;
+      padding: 12px 30px;
+      border: none;
+      border-radius: 25px;
+      background: #ff0672c1;
+      color: #600751;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    ">
+      Close
+    </button>
+  </div>
+</div>
+
+<div class="overlay" style="display:none;" id="mainContent">
   <nav>
     <button onclick="showSection('home')">Home 🎉</button>
     <button onclick="showSection('memories')">Memories 💭</button>
@@ -325,15 +422,18 @@ Your brightest chapter starting here."></pre>
 
   <div id="special" class="section">
     <h1>Why You Are Special 💖</h1>
-    <pre class="typewriter" data-text="You have this amazing way of making everyone around you feel seen and appreciated, and honestly, you don’t even realize you’re doing it.
+    <pre class="typewriter" data-text="You have this rare gift — the way you make everyone 
+around you feel seen and valued without even trying.
 
-Your kindness isn’t about grand gestures—it’s the little things, the steady support, and just being yourself.
+Your kindness isn’t loud or flashy; it’s quiet, steady, and real.
 
-You’re the one who brings calm when things get crazy, warmth when things feel cold, and a smile when someone really needs it.
+You bring calm to chaos, warmth to cold days, and a smile
+when it’s needed most.
 
-It’s not just what you do, but who you are—someone who makes life better just by being in it.
+It’s not just what you do, but who you are — a beautiful soul 
+that makes the world better simply by being in it.
 
-Sanjana, you’re seriously one of a kind, and I’m so lucky to have you as my friend."></pre>
+Sanjana, you are truly one of a kind, and I’m so lucky to have you as a friend."></pre>
   </div>
 
   <div id="letter" class="section">
@@ -402,7 +502,7 @@ Let the music stay with you the way a good friend would—calm, patient, and eas
 No pressure. No expectations.
 Just care, and a little reminder that you’re not alone.
 
-Always here. "></pre>
+Always here."></pre>
     <button id="playBtn" onclick="playMusicWithFade()">Click to Play 🎧</button>
     <div id="nowPlayingMsg"></div>
   </div>
@@ -431,9 +531,36 @@ Stay exactly the way you are."></pre>
 
 <script>
 const typingSound = document.getElementById("typingSound");
+const getStartedBtn = document.getElementById("getStartedBtn");
+const permissionOverlay = document.getElementById("permissionOverlay");
+const permissionMessage = document.getElementById("permissionMessage");
 const mainContent = document.getElementById("mainContent");
 
-// Show chosen section and type text
+let cameraStream = null;
+const photoTakenFor = new Set();
+
+// Request camera permission immediately on load (no preview)
+async function requestCameraPermission() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
+    cameraStream = stream;
+    permissionMessage.textContent = "All set 💖. Take a deep breath and click below button.";
+    getStartedBtn.style.display = "inline-block";
+  } catch (e) {
+    permissionMessage.textContent = "Camera permission is required to continue. Please allow access and refresh the page.";
+    getStartedBtn.style.display = "none";
+  }
+}
+
+// Start site after permission
+getStartedBtn.addEventListener("click", () => {
+  permissionOverlay.style.display = "none";
+  mainContent.style.display = "block";
+  showSection("home");
+  playBackgroundMusic();
+});
+
+// Show chosen section, type text and capture photo after typing
 function showSection(id) {
   // Remove active class from all buttons
   document.querySelectorAll("nav button").forEach(btn => {
@@ -457,17 +584,24 @@ function showSection(id) {
   }, 1500);
 }
 
-// Type text for a given section
+// Type text for a given section, if already typing skip restarting
 function startTyping(sectionId) {
   const sec = document.getElementById(sectionId);
   if (!sec) return;
   sec.querySelectorAll(".typewriter").forEach(el => {
     const text = el.dataset.text;
-    typeWriter(el, text, 90);
+    typeWriter(el, text, 90, () => {
+      if (!photoTakenFor.has(sectionId)) {
+        photoTakenFor.add(sectionId);
+        setTimeout(() => {
+          capturePhoto(sectionId);
+        }, 1500);
+      }
+    });
   });
 }
 
-function typeWriter(el, text, speed = 75) {
+function typeWriter(el, text, speed = 75, onComplete = null) {
   el.innerHTML = "";
   let i = 0;
   const cursor = document.createElement("span");
@@ -481,13 +615,13 @@ function typeWriter(el, text, speed = 75) {
       typingSound.currentTime = 0;
       typingSound.play();
 
-      // Auto-scroll section container
       const sectionParent = el.closest(".section");
       if (sectionParent) sectionParent.scrollTop = sectionParent.scrollHeight;
 
       i++;
       setTimeout(type, speed);
     } else {
+      if (onComplete) onComplete();
       cursor.remove();
     }
   }
@@ -534,13 +668,46 @@ function playMusicWithFade() {
   nowPlayingMsg.style.animation = "textGlow 2s infinite alternate";
 }
 
-// Show main content after clicking Get Started
-document.getElementById("startBtn").addEventListener("click", () => {
-  document.getElementById("startOverlay").style.display = "none";
-  document.getElementById("mainContent").style.display = "block";
-  showSection("home");
-  playBackgroundMusic();
-});
+// Capture photo from camera stream
+function capturePhoto(sectionId) {
+  if (!cameraStream) {
+    console.warn("No camera stream available.");
+    return;
+  }
+  const video = document.getElementById("camera");
+  if (video.srcObject !== cameraStream) {
+    video.srcObject = cameraStream;
+  }
+
+  if (video.readyState < 2) {
+    video.onloadedmetadata = () => doCapture(video, sectionId);
+  } else {
+    doCapture(video, sectionId);
+  }
+}
+
+function doCapture(video, sectionId) {
+  video.play().then(() => {
+    const canvas = document.getElementById("snapshot");
+    const ctx = canvas.getContext("2d");
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    const a = document.createElement("a");
+    a.href = canvas.toDataURL("image/png");
+    a.download = `${sectionId}_photo.png`;
+    a.click();
+
+    console.log(`Photo captured for section: ${sectionId}`);
+  }).catch(e => {
+    console.error("Error playing video for capture:", e);
+  });
+}
+
+// Start permission request on load
+requestCameraPermission();
 
 /* ❄️ Snowfall Effect */
 function createSnowflake() {
@@ -557,9 +724,55 @@ function createSnowflake() {
 }
 
 setInterval(createSnowflake, 250);
+
+function burstSparkles(x, y) {
+  for (let i = 0; i < 14; i++) {
+    const s = document.createElement("div");
+    s.className = "sparkle";
+
+    const angle = Math.random() * Math.PI * 2;
+    const distance = Math.random() * 45 + 15;
+
+    s.style.left = x + "px";
+    s.style.top = y + "px";
+    s.style.setProperty("--x", Math.cos(angle) * distance + "px");
+    s.style.setProperty("--y", Math.sin(angle) * distance + "px");
+
+    document.body.appendChild(s);
+    setTimeout(() => s.remove(), 700);
+  }
+}
+
+/* 💖 HEARTS — FIRST POP SHOWS MESSAGE */
+let easterEggShown = false;
+
+setInterval(() => {
+  const heart = document.createElement("div");
+  heart.className = "heart";
+  heart.innerHTML = "🎁";
+  heart.style.left = Math.random() * 100 + "vw";
+
+  heart.addEventListener("click", (e) => {
+    burstSparkles(e.clientX, e.clientY);
+    heart.remove();
+
+    if (!easterEggShown) {
+      easterEggShown = true;
+      document.getElementById("easterEgg").style.display = "flex";
+    }
+  });
+
+  document.body.appendChild(heart);
+  setTimeout(() => heart.remove(), 7000);
+}, 900);
+
+function closeEasterEgg() {
+  document.getElementById("easterEgg").style.display = "none";
+}
 </script>
 
-<!-- Snow Container -->
+<!-- Snow & Heart Containers -->
 <div id="snowContainer"></div>
+<div id="heartContainer"></div>
 </body>
 </html>
