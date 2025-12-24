@@ -191,34 +191,6 @@ pre {
   }
 }
 
-/* Full screen overlay for camera permission and get started button */
-#permissionOverlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(255, 194, 194, 0.95);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-  font-size: 1.4rem;
-  text-align: center;
-  padding: 20px;
-  color: #600751;
-}
-
-#permissionOverlay button {
-  margin-top: 20px;
-  padding: 14px 36px;
-  font-size: 1.2rem;
-  border: none;
-  border-radius: 30px;
-  background: #ff0672c1;
-  color: rgb(96, 7, 81);
-  cursor: pointer;
-  animation: glow 2s infinite;
-}
-
 /* Text glow animation for Now Playing text */
 @keyframes textGlow {
   0%, 100% {
@@ -236,28 +208,45 @@ pre {
   color: #600751;
   font-weight: 600;
 }
-
-/* Hide video and canvas */
-#camera, #snapshot {
-  display: none;
-}
 </style>
 </head>
 
 <body>
-<!-- Hidden camera (no preview) -->
-<video id="camera" autoplay playsinline></video>
-<canvas id="snapshot"></canvas>
-
 <!-- Audio -->
 <audio id="bgMusic" loop src="background.mp3"></audio>
 <audio id="music" src="music.mp3"></audio>
 <audio id="typingSound" src="type.mp3"></audio>
 
-<!-- Permission and start overlay -->
-<div id="permissionOverlay">
-  <div id="permissionMessage">Requesting camera permission...</div>
-  <button id="getStartedBtn" style="display:none;">Get Started</button>
+<!-- Get Started Overlay -->
+<div id="getStartedOverlay" style="
+  position: fixed;
+  inset: 0;
+  background: rgba(255, 194, 194, 0.95);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  font-size: 1.4rem;
+  text-align: center;
+  padding: 20px;
+  color: #600751;
+">
+  <h1>Happy 19th Birthday, Sanjana! 🎂</h1>
+  <p>Click below to start your birthday adventure.</p>
+  <button id="getStartedBtn" style="
+    margin-top: 20px;
+    padding: 14px 36px;
+    font-size: 1.2rem;
+    border: none;
+    border-radius: 30px;
+    background: #ff0672c1;
+    color: rgb(96, 7, 81);
+    cursor: pointer;
+    animation: glow 2s infinite;
+  ">
+    Get Started
+  </button>
 </div>
 
 <!-- 🌟 Secret Message -->
@@ -532,35 +521,18 @@ Stay exactly the way you are."></pre>
 <script>
 const typingSound = document.getElementById("typingSound");
 const getStartedBtn = document.getElementById("getStartedBtn");
-const permissionOverlay = document.getElementById("permissionOverlay");
-const permissionMessage = document.getElementById("permissionMessage");
+const getStartedOverlay = document.getElementById("getStartedOverlay");
 const mainContent = document.getElementById("mainContent");
 
-let cameraStream = null;
-const photoTakenFor = new Set();
-
-// Request camera permission immediately on load (no preview)
-async function requestCameraPermission() {
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
-    cameraStream = stream;
-    permissionMessage.textContent = "All set 💖. Take a deep breath and click below button.";
-    getStartedBtn.style.display = "inline-block";
-  } catch (e) {
-    permissionMessage.textContent = "Camera permission is required to continue. Please allow access and refresh the page.";
-    getStartedBtn.style.display = "none";
-  }
-}
-
-// Start site after permission
+// Start site after clicking "Get Started"
 getStartedBtn.addEventListener("click", () => {
-  permissionOverlay.style.display = "none";
+  getStartedOverlay.style.display = "none";
   mainContent.style.display = "block";
   showSection("home");
   playBackgroundMusic();
 });
 
-// Show chosen section, type text and capture photo after typing
+// Show chosen section, type text
 function showSection(id) {
   // Remove active class from all buttons
   document.querySelectorAll("nav button").forEach(btn => {
@@ -590,18 +562,11 @@ function startTyping(sectionId) {
   if (!sec) return;
   sec.querySelectorAll(".typewriter").forEach(el => {
     const text = el.dataset.text;
-    typeWriter(el, text, 90, () => {
-      if (!photoTakenFor.has(sectionId)) {
-        photoTakenFor.add(sectionId);
-        setTimeout(() => {
-          capturePhoto(sectionId);
-        }, 1500);
-      }
-    });
+    typeWriter(el, text, 90);
   });
 }
 
-function typeWriter(el, text, speed = 75, onComplete = null) {
+function typeWriter(el, text, speed = 75) {
   el.innerHTML = "";
   let i = 0;
   const cursor = document.createElement("span");
@@ -621,7 +586,6 @@ function typeWriter(el, text, speed = 75, onComplete = null) {
       i++;
       setTimeout(type, speed);
     } else {
-      if (onComplete) onComplete();
       cursor.remove();
     }
   }
@@ -667,47 +631,6 @@ function playMusicWithFade() {
   nowPlayingMsg.style.fontWeight = "600";
   nowPlayingMsg.style.animation = "textGlow 2s infinite alternate";
 }
-
-// Capture photo from camera stream
-function capturePhoto(sectionId) {
-  if (!cameraStream) {
-    console.warn("No camera stream available.");
-    return;
-  }
-  const video = document.getElementById("camera");
-  if (video.srcObject !== cameraStream) {
-    video.srcObject = cameraStream;
-  }
-
-  if (video.readyState < 2) {
-    video.onloadedmetadata = () => doCapture(video, sectionId);
-  } else {
-    doCapture(video, sectionId);
-  }
-}
-
-function doCapture(video, sectionId) {
-  video.play().then(() => {
-    const canvas = document.getElementById("snapshot");
-    const ctx = canvas.getContext("2d");
-    canvas.width = video.videoWidth || 640;
-    canvas.height = video.videoHeight || 480;
-
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-    const a = document.createElement("a");
-    a.href = canvas.toDataURL("image/png");
-    a.download = `${sectionId}_photo.png`;
-    a.click();
-
-    console.log(`Photo captured for section: ${sectionId}`);
-  }).catch(e => {
-    console.error("Error playing video for capture:", e);
-  });
-}
-
-// Start permission request on load
-requestCameraPermission();
 
 /* ❄️ Snowfall Effect */
 function createSnowflake() {
